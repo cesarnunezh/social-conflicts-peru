@@ -30,14 +30,14 @@ This project analyzes socio-environmental conflicts in Perú's extractive indust
 ## How to use
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/socio-env_conflicts_peru.git
+git clone https://github.com/cesarnunezh/social-conflicts-peru.git
 ```
-2. Install dependencies:
+2. Syncronize the virtuar environment:
 ```bash
-pip install -r requirements.txt
+uv sync
 ```   
 3. Run data processing scripts:
 ```bash
-python scripts/data_extraction.py
+uv run -m social_conflicts_peru
 ```
 
