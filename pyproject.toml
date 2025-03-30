@@ -1,0 +1,15 @@
+[project]
+name = "social-conflicts-peru"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bs4>=0.0.2",
+    "fitz>=0.0.1.dev2",
+    "httpx>=0.28.1",
+    "ipython>=9.0.2",
+    "pandas>=2.2.3",
+    "pathlib>=1.0.1",
+    "pymupdf>=1.25.4",
+]

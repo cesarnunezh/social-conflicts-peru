@@ -30,7 +30,7 @@ This project analyzes socio-environmental conflicts in Perú's extractive indust
 ## How to use
 1. Clone the repository:
 ```bash
-git clone https://github.com/cesarnunezh/social-conflicts-peru.git
+git clone git@github.com:cesarnunezh/social-conflicts-peru.git
 ```
 2. Syncronize the virtuar environment:
 ```bash

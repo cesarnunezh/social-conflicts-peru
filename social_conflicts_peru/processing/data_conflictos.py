@@ -3,11 +3,15 @@ import pandas as pd
 import re
 import time
 import fitz  # PyMuPDF
+from pathlib import Path
 
-start_time = time.time()
-
-# 1. Generamos las funciones que utilizaremos para cada pdf
 def extract_text_after_target(pdf_path, target_text):
+    '''
+    Function that extracts the text after an specified target 
+    
+    Args:
+        - pdf_path: the 
+    '''
     pdf_document = fitz.open(pdf_path)
 
     for page_num in range(pdf_document.page_count):
@@ -85,6 +89,8 @@ for pdf in sorted_files:
 
 
 # Code or process to measure
+start_time = time.time()
+
 end_time = time.time()
 
 elapsed_time = end_time - start_time
