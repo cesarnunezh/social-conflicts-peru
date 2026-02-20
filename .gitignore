@@ -1,0 +1,5 @@
+data/
+draft_notebooks/
+logs/
+uv.lock
+*__pycache__*

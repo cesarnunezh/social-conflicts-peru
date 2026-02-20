@@ -3,20 +3,12 @@ import re
 import requests
 import httpx
 import lxml.html
-from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import time
 from pathlib import Path
-import itertools
+from ..config import settings, directories
 
-# # Setting the url and a cache path to track pdf already used
-# base_url = "https://www.defensoria.gob.pe/categorias_de_documentos/reportes/page/{}/"
-# cache_dir = Path('data/pdf_cache')
-# if not cache_dir.exists():
-#     os.makedirs(cache_dir)
-
-# # Registro de nombres de archivos descargados
-# downloaded_files = set()
+BASE_URL = "https://www.defensoria.gob.pe/categorias_de_documentos/reportes/"
 
 def extract_numbers(text: str):
     '''
