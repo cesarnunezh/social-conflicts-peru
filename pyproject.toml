@@ -29,3 +29,11 @@ dependencies = [
     "tqdm>=4.67.3",
     "wordcloud>=1.9.6",
 ]
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["social_conflicts_peru*"]
+exclude = ["data*", "logs*", "draft_notebooks*"]

@@ -9,7 +9,8 @@ def load_data(file_path: Path) -> pd.DataFrame:
 
 def save_description(df: pd.DataFrame, file_name: str = "description.json"):
     # Keeps only the descriptions of the conflict
-    desc_df = df.iloc[:,0:3]
+    desc_df = df.iloc[:,0:2]
+    desc_df.columns = ["id", "initial_description"]
     desc_df.to_json(directories.PROCESSED_DATA / file_name)
     return None
 
@@ -33,6 +34,8 @@ def save_expressions(df: pd.DataFrame, file_name: str = "expressions.json"):
 
     # Droping missing values
     df_exp = df_exp[df_exp[['InfoExpresión','d_Expresión']].notna().all(axis=1)]
+    df_exp.columns = ["id", "date", "exp_details"]
+    df_exp["date"] = pd.to_datetime(df_exp["date"])
 
     # Exporting data to jsonfile
     df_exp.to_json(directories.PROCESSED_DATA / file_name)
