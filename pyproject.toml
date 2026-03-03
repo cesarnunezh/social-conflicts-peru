@@ -8,6 +8,7 @@ dependencies = [
     "bs4>=0.0.2",
     "camelot-py>=1.0.9",
     "fastexcel>=0.19.0",
+    "fastparquet>=2025.12.0",
     "fitz>=0.0.1.dev2",
     "googletrans>=4.0.2",
     "httpx>=0.28.1",
@@ -20,7 +21,9 @@ dependencies = [
     "numpy>=2.4.2",
     "pandas>=2.2.3",
     "pathlib>=1.0.1",
+    "pdfplumber>=0.11.9",
     "polars>=1.38.1",
+    "pyarrow>=23.0.1",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "pymupdf>=1.25.4",
@@ -29,3 +32,11 @@ dependencies = [
     "tqdm>=4.67.3",
     "wordcloud>=1.9.6",
 ]
+
+[dependency-groups]
+dev = [
+    "social-conflicts-peru",
+]
+
+[tool.uv.sources]
+social-conflicts-peru = { workspace = true }
