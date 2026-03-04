@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
 import httpx
 import lxml.html
@@ -39,12 +39,6 @@ def slugify(text: str) -> str:
     return text or "reporte"
 
 
-def parse_html(url: str, client: httpx.Client) -> lxml.html.HtmlElement:
-    response = client.get(url, follow_redirects=True, timeout=30.0)
-    response.raise_for_status()
-    return lxml.html.fromstring(response.text)
-
-
 def parse_report_id(title: str) -> int | None:
     # Matches patterns like: "N.° 262", "Nº 262", "No 262"
     patterns = [
@@ -62,8 +56,7 @@ def parse_report_id(title: str) -> int | None:
     return None
 
 
-def get_pdf_links(page_url: str, client: httpx.Client) -> list[ReportLink]:
-    tree = parse_html(page_url, client)
+def get_pdf_links(tree: lxml.html.HtmlElement, page_url: str) -> list[ReportLink]:
     links: list[ReportLink] = []
 
     for card in tree.xpath(CARD_SELECTOR):
@@ -90,39 +83,140 @@ def get_pdf_links(page_url: str, client: httpx.Client) -> list[ReportLink]:
     return links
 
 
-def build_page_url(base_url: str, page: int) -> str:
-    if "{page}" in base_url:
-        return base_url.format(page=page)
+def get_next_page_links(tree: lxml.html.HtmlElement, page_url: str) -> list[str]:
+    """
+    Extract candidate pagination URLs directly from the page markup.
+    """
+    hrefs: list[str] = []
+    selectors = [
+        './/a[@rel="next"]/@href',
+        './/a[contains(@class,"next")]/@href',
+        './/a[contains(@class,"page-numbers")]/@href',
+        './/nav//*[self::a][@href]/@href',
+    ]
+    for selector in selectors:
+        hrefs.extend(tree.xpath(selector))
 
+    out: list[str] = []
+    seen: set[str] = set()
+    for href in hrefs:
+        absolute = urljoin(page_url, str(href).strip())
+        if not absolute:
+            continue
+        # Keep only links that look like listing pagination.
+        if (
+            "/categorias_de_documentos/reportes" not in absolute
+            and "paged=" not in absolute
+            and "page/" not in absolute
+        ):
+            continue
+        if absolute in seen:
+            continue
+        seen.add(absolute)
+        out.append(absolute)
+    return out
+
+
+def with_query_param(url: str, key: str, value: str) -> str:
+    parsed = urlparse(url)
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    query[key] = [value]
+    new_query = urlencode(query, doseq=True)
+    return urlunparse(parsed._replace(query=new_query))
+
+
+def normalize_reports_base_url(base_url: str) -> str:
+    """
+    Normalize listing URL to the reports root so pagination can be built
+    deterministically even if user passes a /page/N/ URL.
+    """
+    parsed = urlparse(base_url)
+    path = re.sub(r"/page/\d+/?$", "/", parsed.path)
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    query.pop("paged", None)
+    query.pop("sf_paged", None)
+    normalized_query = urlencode(query, doseq=True)
+    return urlunparse(parsed._replace(path=path, query=normalized_query))
+
+
+def page_candidates(base_url: str, page: int) -> list[str]:
+    base_url = normalize_reports_base_url(base_url)
     if page == 1:
-        return base_url
+        return [base_url]
 
-    base = base_url.rstrip("/") + "/"
-    return urljoin(base, f"page/{page}/")
+    candidates: list[str] = []
+    if "{page}" in base_url:
+        candidates.append(base_url.format(page=page))
+    else:
+        base = base_url.rstrip("/") + "/"
+        candidates.extend(
+            [
+                urljoin(base, f"page/{page}/"),
+                with_query_param(base_url, "paged", str(page)),
+                with_query_param(base_url, "sf_paged", str(page)),
+            ]
+        )
+    seen: set[str] = set()
+    out: list[str] = []
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        out.append(candidate)
+    return out
 
 
-def get_all_links(base_url: str, client: httpx.Client) -> list[ReportLink]:
-    page_num = 1
+def get_all_links(base_url: str, client: httpx.Client, max_links: int | None = None) -> list[ReportLink]:
+    base_url = normalize_reports_base_url(base_url)
     output: list[ReportLink] = []
     seen_urls: set[str] = set()
+    seen_final_pages: set[str] = set()
+    max_pages = 250
+    consecutive_empty_pages = 0
 
-    while True:
-        page_url = build_page_url(base_url, page_num)
-        response = client.get(page_url, follow_redirects=True, timeout=30.0)
-        if response.status_code != 200:
+    for page_num in range(1, max_pages + 1):
+        page_links: list[ReportLink] = []
+        page_reachable = False
+
+        for candidate_url in page_candidates(base_url, page_num):
+            response = client.get(candidate_url, follow_redirects=True, timeout=30.0)
+            if response.status_code != 200:
+                continue
+            page_reachable = True
+            final_url = str(response.url)
+            if final_url in seen_final_pages:
+                continue
+            seen_final_pages.add(final_url)
+
+            tree = lxml.html.fromstring(response.text)
+            page_links = get_pdf_links(tree, final_url)
+            if page_links:
+                break
+
+        if not page_reachable:
             break
 
-        page_links = get_pdf_links(page_url, client)
-        if not page_links:
-            break
-
+        new_on_page = 0
         for item in page_links:
             if item.pdf_url in seen_urls:
                 continue
             seen_urls.add(item.pdf_url)
             output.append(item)
+            new_on_page += 1
+            if max_links is not None and len(output) >= max_links:
+                break
 
-        page_num += 1
+        if max_links is not None and len(output) >= max_links:
+            break
+
+        if new_on_page == 0:
+            consecutive_empty_pages += 1
+        else:
+            consecutive_empty_pages = 0
+
+        # End after several empty pages to avoid looping through non-report pages.
+        if consecutive_empty_pages >= 3:
+            break
 
     output.sort(key=lambda x: x.report_id if x.report_id is not None else -1, reverse=True)
     return output
@@ -180,7 +274,7 @@ def fetch_reports(
     }
 
     with httpx.Client(headers={"User-Agent": "social-conflicts-peru-bot/1.0"}) as client:
-        links = get_all_links(base_url, client)
+        links = get_all_links(base_url, client, max_links=limit)
         summary["discovered"] = len(links)
 
         for report in links:
