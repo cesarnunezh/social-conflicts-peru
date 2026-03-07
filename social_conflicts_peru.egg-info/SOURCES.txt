@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+social_conflicts_peru/__init__.py
+social_conflicts_peru/config.py
+social_conflicts_peru.egg-info/PKG-INFO
+social_conflicts_peru.egg-info/SOURCES.txt
+social_conflicts_peru.egg-info/dependency_links.txt
+social_conflicts_peru.egg-info/requires.txt
+social_conflicts_peru.egg-info/top_level.txt
+social_conflicts_peru/processing/__init__.py
+social_conflicts_peru/processing/conflictos_mineros.py
+social_conflicts_peru/processing/data_conflictos.py
+social_conflicts_peru/scrappers/__init__.py
+social_conflicts_peru/scrappers/fetch_reports.py

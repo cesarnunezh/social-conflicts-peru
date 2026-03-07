@@ -215,7 +215,7 @@ def get_all_links(base_url: str, client: httpx.Client, max_links: int | None = N
             consecutive_empty_pages = 0
 
         # End after several empty pages to avoid looping through non-report pages.
-        if consecutive_empty_pages >= 3:
+        if consecutive_empty_pages >= 6:
             break
 
     output.sort(key=lambda x: x.report_id if x.report_id is not None else -1, reverse=True)
