@@ -63,6 +63,8 @@ class Settings(BaseSettings):
         "RAW_DB_URL", f"sqlite:///{directories.RAW_DATA.as_posix()}/RawConflictosPeru.db"
     )
     HF_TOKEN: str = os.getenv("HF_TOKEN")
+    OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
     # This is only in case we need some API_KEYS. Allow us to handle safely.
     model_config = ConfigDict(env_file=directories.ROOT_DIR / ".env")

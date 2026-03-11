@@ -1,0 +1,2 @@
+prompt_style,model_name,n_rows,accuracy,balanced_accuracy,precision_macro,recall_macro,f1_macro,precision_hay_dialogo,recall_hay_dialogo,f1_hay_dialogo,support_hay_dialogo,precision_no_dialogo,recall_no_dialogo,f1_no_dialogo,support_no_dialogo
+multi_agent,gpt-5-mini,50,0.56,0.4281842818428184,0.45276292335115864,0.4281842818428184,0.4282744282744283,0.7878787878787878,0.6341463414634146,0.7027027027027027,41,0.11764705882352941,0.2222222222222222,0.15384615384615385,9
